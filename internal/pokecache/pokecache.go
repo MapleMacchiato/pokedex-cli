@@ -26,7 +26,7 @@ func (c *Cache) reapLoop(interval time.Duration) {
 		for k, v := range c.entries {
 			if v.createdAt.Compare(reapDate) <= 0 {
 				delete(c.entries, k)
-				fmt.Printf("Deleted %s from cache\n", k)
+				fmt.Printf("\nDeleted %s from cache\n", k)
 			}
 		}
 		c.mu.Unlock()
@@ -41,14 +41,14 @@ func (c *Cache) add(key string, val []byte) {
 		val:       val,
 	}
 	c.entries[key] = entry
-	fmt.Printf("Added %s to cache\n", key)
+	fmt.Printf("\nAdded %s to cache\n", key)
 }
 
 func (c *Cache) get(key string) ([]byte, bool) {
 	c.mu.Lock()
 	defer c.mu.Unlock()
 	entry, ok := c.entries[key]
-	fmt.Printf("key: %s, ok: %v", key, ok)
+	fmt.Printf("\nRetrieving key %s from cache. Was present: %t\n", key, ok)
 	return entry.val, ok
 
 }
