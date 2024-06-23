@@ -46,7 +46,6 @@ func commandMapB(pkc *pokeapi.Client) error {
 	if pkc.PrevURL == nil {
 		return errors.New("No previous map")
 	}
-	fmt.Println(*pkc.PrevURL)
 	err := pkc.GetLocations(pkc.PrevURL)
 	return err
 }
