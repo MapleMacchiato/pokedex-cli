@@ -24,9 +24,9 @@ func TestAddGet(t *testing.T) {
 
 	for i, c := range cases {
 		t.Run(fmt.Sprintf("Test case %v", i), func(t *testing.T) {
-			NewCache(interval)
-			Add(c.key, c.val)
-			val, ok := Get(c.key)
+			cache := NewCache(interval)
+			cache.Add(c.key, c.val)
+			val, ok := cache.Get(c.key)
 			if !ok {
 				t.Errorf("expected to find key")
 				return
@@ -42,10 +42,10 @@ func TestAddGet(t *testing.T) {
 func TestReapLoop(t *testing.T) {
 	const baseTime = 5 * time.Millisecond
 	const waitTime = baseTime + 5*time.Millisecond
-	NewCache(baseTime)
-	Add("https://example.com", []byte("testdata"))
+	cache := NewCache(baseTime)
+	cache.Add("https://example.com", []byte("testdata"))
 
-	_, ok := Get("https://example.com")
+	_, ok := cache.Get("https://example.com")
 	if !ok {
 		t.Errorf("expected to find key")
 		return
@@ -53,9 +53,10 @@ func TestReapLoop(t *testing.T) {
 
 	time.Sleep(waitTime)
 
-	_, ok = Get("https://example.com")
+	_, ok = cache.Get("https://example.com")
 	if ok {
 		t.Errorf("expected to not find key")
 		return
 	}
 }
+

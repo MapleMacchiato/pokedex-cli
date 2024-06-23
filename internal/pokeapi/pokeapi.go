@@ -6,97 +6,98 @@ import (
 	"fmt"
 	"io"
 	"net/http"
+	"time"
 
 	"github.com/MapleMacchiato/pokedex-cli/internal/pokecache"
 )
 
-type Areas struct {
+type Client struct {
+	locationsCache pokecache.Cache
+	areaCache      pokecache.Cache
+	PrevURL        *string
+	NextURL        *string
+	httpClient     http.Client
+}
+
+func NewClient(timeout, cacheInterval time.Duration) Client {
+	return Client{
+		locationsCache: pokecache.NewCache(cacheInterval),
+		areaCache:      pokecache.NewCache(cacheInterval),
+		httpClient: http.Client{
+			Timeout: timeout,
+		},
+	}
+}
+
+type Locations struct {
 	Next     *string `json:"next"`
 	Previous *string `json:"previous"`
 	Results  []struct {
 		Name string `json:"name"`
+		URL  string `json:"url"`
 	} `json:"results"`
 }
 
-var areas = &Areas{}
-
-func (a *Areas) getMaps(url string) {
-	bytes, ok := pokecache.Get(url)
-	if ok {
-		a.getAreasFromBytes(bytes)
-		return
-	}
-	req, err := http.NewRequest("GET", url, nil)
-	if err != nil {
-		fmt.Println(err)
-		return
-	}
-	res, err := http.DefaultClient.Do(req)
-	if err != nil {
-		fmt.Println(err)
-		return
-	}
-	defer res.Body.Close()
-	body, err := io.ReadAll(res.Body)
-	if err != nil {
-		fmt.Println(err)
-		return
-	}
-	err = json.Unmarshal(body, &a)
-	if err != nil {
-		fmt.Println(err)
-	}
-	pokecache.Add(url, a.getBytes())
-}
-
-func (a *Areas) printLocations() {
+func (l *Locations) printLocations() {
 	var names string
-	for _, location := range *&a.Results {
+	for _, location := range *&l.Results {
 		fmt.Println(location.Name)
 		names += location.Name + "\n"
 	}
 }
 
-func (a *Areas) getBytes() []byte {
+func (l *Locations) getBytes() []byte {
 	areasBytes := new(bytes.Buffer)
-	json.NewEncoder(areasBytes).Encode(a)
+	json.NewEncoder(areasBytes).Encode(l)
 	return areasBytes.Bytes()
 }
 
-func (a *Areas) getAreasFromBytes(bytes []byte) {
-	err := json.Unmarshal(bytes, &a)
+func (l *Locations) getLocationsFromBytes(bytes []byte) {
+	err := json.Unmarshal(bytes, &l)
 	if err != nil {
 		fmt.Println(err)
 	}
 }
 
-func (a *Areas) getMapsN() {
-	var url string
-	if a.Next == nil {
-		url = "https://pokeapi.co/api/v2/location-area/"
+func (c *Client) GetLocations(pageURL *string) error {
+	var url *string
+	if pageURL == nil {
+		temp := "https://pokeapi.co/api/v2/location-area/"
+		url = &temp
 	} else {
-		url = *a.Next
+		url = pageURL
 	}
-	a.getMaps(url)
-	a.printLocations()
-}
 
-func (a *Areas) getMapsB() {
-	var url string
-	if a.Previous == nil {
-		fmt.Println("No previous areas")
-		return
-	} else {
-		url = *a.Previous
+	locations := Locations{}
+	bytes, ok := c.locationsCache.Get(*url)
+	if ok {
+		locations.getLocationsFromBytes(bytes)
 	}
-	a.getMaps(url)
-	a.printLocations()
-}
 
-func GetMapsB() {
-	areas.getMapsB()
-}
+	req, err := http.NewRequest("GET", *url, nil)
+	if err != nil {
+		return err
+	}
 
-func GetMaps() {
-	areas.getMapsN()
+	res, err := c.httpClient.Do(req)
+	if err != nil {
+		return err
+	}
+
+	defer res.Body.Close()
+	body, err := io.ReadAll(res.Body)
+	if err != nil {
+		return err
+	}
+
+	err = json.Unmarshal(body, &locations)
+	if err != nil {
+		return err
+	}
+
+	c.locationsCache.Add(*url, locations.getBytes())
+	c.NextURL = locations.Next
+	c.PrevURL = locations.Previous
+	locations.printLocations()
+	return nil
 }

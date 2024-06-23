@@ -2,19 +2,19 @@ package main
 
 import (
 	"bufio"
+	"errors"
 	"fmt"
 	"os"
 	"strings"
 	"time"
 
 	"github.com/MapleMacchiato/pokedex-cli/internal/pokeapi"
-	"github.com/MapleMacchiato/pokedex-cli/internal/pokecache"
 )
 
 type cliCommand struct {
 	name        string
 	description string
-	callback    func() error
+	callback    func(*pokeapi.Client) error
 }
 
 func getCommands() map[string]cliCommand {
@@ -42,16 +42,21 @@ func getCommands() map[string]cliCommand {
 	}
 }
 
-func commandMapB() error {
-	pokeapi.GetMapsB()
-	return nil
+func commandMapB(pkc *pokeapi.Client) error {
+	if pkc.PrevURL == nil {
+		return errors.New("No previous map")
+	}
+	fmt.Println(*pkc.PrevURL)
+	err := pkc.GetLocations(pkc.PrevURL)
+	return err
 }
 
-func commandMap() error {
-	pokeapi.GetMaps()
-	return nil
+func commandMap(pkc *pokeapi.Client) error {
+	err := pkc.GetLocations(pkc.NextURL)
+	return err
 }
-func commandHelp() error {
+
+func commandHelp(pkc *pokeapi.Client) error {
 	fmt.Println("Welcome to the Pokedex!")
 	fmt.Println("Available list of Commands:")
 	commands := getCommands()
@@ -61,7 +66,7 @@ func commandHelp() error {
 	return nil
 }
 
-func commandExit() error {
+func commandExit(pkc *pokeapi.Client) error {
 	fmt.Println("Exiting the Pokedex")
 	os.Exit(0)
 	return nil
@@ -73,7 +78,7 @@ func cleanInput(text string) []string {
 	return words
 }
 
-func run_repl() {
+func run_repl(pkc *pokeapi.Client) {
 	reader := bufio.NewScanner(os.Stdin)
 	for {
 		fmt.Print("Pokedex > ")
@@ -84,13 +89,15 @@ func run_repl() {
 		if !ok {
 			fmt.Println("Invalid input, use help to see available commands")
 		} else {
-			command.callback()
+			err := command.callback(pkc)
+			if err != nil {
+				fmt.Println(err)
+			}
 		}
 	}
 }
 
 func main() {
-
-	pokecache.NewCache(time.Second * 30)
-	run_repl()
+	pokeClient := pokeapi.NewClient(5*time.Second, 5*time.Minute)
+	run_repl(&pokeClient)
 }
