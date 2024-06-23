@@ -17,13 +17,7 @@ type Areas struct {
 
 var areas = &Areas{}
 
-func (a *Areas) getMaps() {
-	var url string
-	if a.Next == nil {
-		url = "https://pokeapi.co/api/v2/location-area/"
-	} else {
-		url = *a.Next
-	}
+func (a *Areas) getMaps(url string) {
 	req, err := http.NewRequest("GET", url, nil)
 	if err != nil {
 		fmt.Println(err)
@@ -44,10 +38,22 @@ func (a *Areas) getMaps() {
 	if err != nil {
 		fmt.Println(err)
 	}
+	var names string
 
 	for _, location := range *&a.Results {
 		fmt.Println(location.Name)
+		names += location.Name + "\n"
 	}
+}
+
+func (a *Areas) getMapsN() {
+	var url string
+	if a.Next == nil {
+		url = "https://pokeapi.co/api/v2/location-area/"
+	} else {
+		url = *a.Next
+	}
+	areas.getMaps(url)
 }
 
 func (a *Areas) getMapsB() {
@@ -58,30 +64,7 @@ func (a *Areas) getMapsB() {
 	} else {
 		url = *a.Previous
 	}
-	req, err := http.NewRequest("GET", url, nil)
-	if err != nil {
-		fmt.Println(err)
-		return
-	}
-	res, err := http.DefaultClient.Do(req)
-	if err != nil {
-		fmt.Println(err)
-		return
-	}
-	defer res.Body.Close()
-	body, err := io.ReadAll(res.Body)
-	if err != nil {
-		fmt.Println(err)
-		return
-	}
-	err = json.Unmarshal(body, &a)
-	if err != nil {
-		fmt.Println(err)
-	}
-
-	for _, location := range *&a.Results {
-		fmt.Println(location.Name)
-	}
+	areas.getMaps(url)
 
 }
 
@@ -90,5 +73,5 @@ func GetMapsB() {
 }
 
 func GetMaps() {
-	areas.getMaps()
+	areas.getMapsN()
 }

@@ -3,9 +3,12 @@ package main
 import (
 	"bufio"
 	"fmt"
-	"github.com/MapleMacchiato/pokedex-cli/internal/pokeapi"
 	"os"
 	"strings"
+	"time"
+
+	"github.com/MapleMacchiato/pokedex-cli/internal/pokeapi"
+	"github.com/MapleMacchiato/pokedex-cli/internal/pokecache"
 )
 
 type cliCommand struct {
@@ -59,7 +62,7 @@ func commandHelp() error {
 }
 
 func commandExit() error {
-	fmt.Println("Exit")
+	fmt.Println("Exiting the Pokedex")
 	os.Exit(0)
 	return nil
 }
@@ -87,5 +90,7 @@ func run_repl() {
 }
 
 func main() {
+
+	pokecache.NewCache(time.Second * 30)
 	run_repl()
 }
