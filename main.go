@@ -3,7 +3,7 @@ package main
 import (
 	"bufio"
 	"fmt"
-	"github.com/MapleMacchiato/pokedex-cli/internal"
+	"github.com/MapleMacchiato/pokedex-cli/internal/pokeapi"
 	"os"
 	"strings"
 )
@@ -28,14 +28,24 @@ func getCommands() map[string]cliCommand {
 		},
 		"map": {
 			name:        "map",
-			description: "Get locations",
+			description: "Get next locations",
 			callback:    commandMap,
+		},
+		"mapb": {
+			name:        "mapb",
+			description: "Get previous locations",
+			callback:    commandMapB,
 		},
 	}
 }
 
+func commandMapB() error {
+	pokeapi.GetMapsB()
+	return nil
+}
+
 func commandMap() error {
-	internal.GetMaps()
+	pokeapi.GetMaps()
 	return nil
 }
 func commandHelp() error {
