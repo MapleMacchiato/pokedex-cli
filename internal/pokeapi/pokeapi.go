@@ -1,7 +1,6 @@
 package pokeapi
 
 import (
-	"bytes"
 	"encoding/json"
 	"fmt"
 	"io"
@@ -38,24 +37,20 @@ type Locations struct {
 	} `json:"results"`
 }
 
+type Pokemons struct {
+	PokemonEncounters []struct {
+		Pokemon struct {
+			Name string `json:"name"`
+			URL  string `json:"url"`
+		} `json:"pokemon"`
+	}
+}
+
 func (l *Locations) printLocations() {
 	var names string
 	for _, location := range *&l.Results {
 		fmt.Println(location.Name)
 		names += location.Name + "\n"
-	}
-}
-
-func (l *Locations) getBytes() []byte {
-	areasBytes := new(bytes.Buffer)
-	json.NewEncoder(areasBytes).Encode(l)
-	return areasBytes.Bytes()
-}
-
-func (l *Locations) getLocationsFromBytes(bytes []byte) {
-	err := json.Unmarshal(bytes, &l)
-	if err != nil {
-		fmt.Println(err)
 	}
 }
 
@@ -69,33 +64,36 @@ func (c *Client) GetLocations(pageURL *string) error {
 	}
 
 	locations := Locations{}
-	bytes, ok := c.locationsCache.Get(*url)
+	body, ok := c.locationsCache.Get(*url)
 	if ok {
-		locations.getLocationsFromBytes(bytes)
-	}
+		err := json.Unmarshal(body, &locations)
+		if err != nil {
+			return err
+		}
+	} else {
 
-	req, err := http.NewRequest("GET", *url, nil)
-	if err != nil {
-		return err
-	}
+		req, err := http.NewRequest("GET", *url, nil)
+		if err != nil {
+			return err
+		}
 
-	res, err := c.httpClient.Do(req)
-	if err != nil {
-		return err
-	}
+		res, err := c.httpClient.Do(req)
+		if err != nil {
+			return err
+		}
 
-	defer res.Body.Close()
-	body, err := io.ReadAll(res.Body)
-	if err != nil {
-		return err
-	}
+		defer res.Body.Close()
+		body, err := io.ReadAll(res.Body)
+		if err != nil {
+			return err
+		}
 
-	err = json.Unmarshal(body, &locations)
-	if err != nil {
-		return err
+		err = json.Unmarshal(body, &locations)
+		if err != nil {
+			return err
+		}
 	}
-
-	c.locationsCache.Add(*url, locations.getBytes())
+	c.locationsCache.Add(*url, body)
 	c.NextURL = locations.Next
 	c.PrevURL = locations.Previous
 	locations.printLocations()
