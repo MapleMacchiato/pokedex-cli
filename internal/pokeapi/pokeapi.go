@@ -37,20 +37,12 @@ type Locations struct {
 	} `json:"results"`
 }
 
-type Pokemons struct {
+type AreaPokemons struct {
 	PokemonEncounters []struct {
 		Pokemon struct {
 			Name string `json:"name"`
 			URL  string `json:"url"`
 		} `json:"pokemon"`
-	}
-}
-
-func (l *Locations) printLocations() {
-	var names string
-	for _, location := range *&l.Results {
-		fmt.Println(location.Name)
-		names += location.Name + "\n"
 	}
 }
 
@@ -68,6 +60,7 @@ func (c *Client) GetLocations(pageURL *string) error {
 	if ok {
 		err := json.Unmarshal(body, &locations)
 		if err != nil {
+			fmt.Println("test")
 			return err
 		}
 	} else {
@@ -84,6 +77,7 @@ func (c *Client) GetLocations(pageURL *string) error {
 
 		defer res.Body.Close()
 		body, err := io.ReadAll(res.Body)
+		c.locationsCache.Add(*url, body)
 		if err != nil {
 			return err
 		}
@@ -93,9 +87,48 @@ func (c *Client) GetLocations(pageURL *string) error {
 			return err
 		}
 	}
-	c.locationsCache.Add(*url, body)
+
 	c.NextURL = locations.Next
 	c.PrevURL = locations.Previous
-	locations.printLocations()
+	for _, location := range locations.Results {
+		fmt.Println(location.Name)
+	}
+	return nil
+}
+
+func (c *Client) GetPokemon(area string) error {
+	url := "https://pokeapi.co/api/v2/location-area/" + area
+	pokemons := AreaPokemons{}
+	body, ok := c.areaCache.Get(url)
+	if ok {
+		err := json.Unmarshal(body, &pokemons)
+		if err != nil {
+			return err
+		}
+	} else {
+		req, err := http.NewRequest("GET", url, nil)
+		if err != nil {
+			return err
+		}
+
+		res, err := c.httpClient.Do(req)
+		if err != nil {
+			return err
+		}
+
+		defer res.Body.Close()
+		body, err := io.ReadAll(res.Body)
+		if err != nil {
+			return err
+		}
+		err = json.Unmarshal(body, &pokemons)
+		if err != nil {
+			return err
+		}
+	}
+	c.areaCache.Add(url, body)
+	for _, pokemon := range pokemons.PokemonEncounters {
+		fmt.Println(pokemon.Pokemon.Name)
+	}
 	return nil
 }
