@@ -14,7 +14,7 @@ import (
 type cliCommand struct {
 	name        string
 	description string
-	callback    func(*pokeapi.Client) error
+	callback    func(*pokeapi.Client, string) error
 }
 
 func getCommands() map[string]cliCommand {
@@ -39,23 +39,32 @@ func getCommands() map[string]cliCommand {
 			description: "Get previous locations",
 			callback:    commandMapB,
 		},
+		"explore": {
+			name:        "explore",
+			description: "Get a list of pokemons from given area",
+			callback:    commandExplore,
+		},
 	}
 }
 
-func commandMapB(pkc *pokeapi.Client) error {
+func commandExplore(pkc *pokeapi.Client, area string) error {
+	fmt.Printf("Exploring %s\n", area)
+	fmt.Printf("Found Pokemon:\n")
+	return pkc.GetPokemon(area)
+}
+
+func commandMapB(pkc *pokeapi.Client, a string) error {
 	if pkc.PrevURL == nil {
 		return errors.New("No previous map")
 	}
-	err := pkc.GetLocations(pkc.PrevURL)
-	return err
+	return pkc.GetLocations(pkc.PrevURL)
 }
 
-func commandMap(pkc *pokeapi.Client) error {
-	err := pkc.GetLocations(pkc.NextURL)
-	return err
+func commandMap(pkc *pokeapi.Client, a string) error {
+	return pkc.GetLocations(pkc.NextURL)
 }
 
-func commandHelp(pkc *pokeapi.Client) error {
+func commandHelp(pkc *pokeapi.Client, a string) error {
 	fmt.Println("Welcome to the Pokedex!")
 	fmt.Println("Available list of Commands:")
 	commands := getCommands()
@@ -65,7 +74,7 @@ func commandHelp(pkc *pokeapi.Client) error {
 	return nil
 }
 
-func commandExit(pkc *pokeapi.Client) error {
+func commandExit(pkc *pokeapi.Client, a string) error {
 	fmt.Println("Exiting the Pokedex")
 	os.Exit(0)
 	return nil
@@ -84,11 +93,15 @@ func run_repl(pkc *pokeapi.Client) {
 		reader.Scan()
 		words := cleanInput(reader.Text())
 		commandName := words[0]
+		var args string
+		if len(words) > 1 {
+			args = words[1]
+		}
 		command, ok := getCommands()[commandName]
 		if !ok {
 			fmt.Println("Invalid input, use help to see available commands")
 		} else {
-			err := command.callback(pkc)
+			err := command.callback(pkc, args)
 			if err != nil {
 				fmt.Println(err)
 			}

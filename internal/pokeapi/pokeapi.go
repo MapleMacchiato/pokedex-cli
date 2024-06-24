@@ -28,24 +28,6 @@ func NewClient(timeout, cacheInterval time.Duration) Client {
 	}
 }
 
-type Locations struct {
-	Next     *string `json:"next"`
-	Previous *string `json:"previous"`
-	Results  []struct {
-		Name string `json:"name"`
-		URL  string `json:"url"`
-	} `json:"results"`
-}
-
-type AreaPokemons struct {
-	PokemonEncounters []struct {
-		Pokemon struct {
-			Name string `json:"name"`
-			URL  string `json:"url"`
-		} `json:"pokemon"`
-	}
-}
-
 func (c *Client) GetLocations(pageURL *string) error {
 	var url *string
 	if pageURL == nil {
@@ -55,7 +37,7 @@ func (c *Client) GetLocations(pageURL *string) error {
 		url = pageURL
 	}
 
-	locations := Locations{}
+	locations := LocationAreas{}
 	body, ok := c.locationsCache.Get(*url)
 	if ok {
 		err := json.Unmarshal(body, &locations)
@@ -98,7 +80,7 @@ func (c *Client) GetLocations(pageURL *string) error {
 
 func (c *Client) GetPokemon(area string) error {
 	url := "https://pokeapi.co/api/v2/location-area/" + area
-	pokemons := AreaPokemons{}
+	pokemons := Location{}
 	body, ok := c.areaCache.Get(url)
 	if ok {
 		err := json.Unmarshal(body, &pokemons)
@@ -118,6 +100,7 @@ func (c *Client) GetPokemon(area string) error {
 
 		defer res.Body.Close()
 		body, err := io.ReadAll(res.Body)
+		c.areaCache.Add(url, body)
 		if err != nil {
 			return err
 		}
@@ -126,9 +109,8 @@ func (c *Client) GetPokemon(area string) error {
 			return err
 		}
 	}
-	c.areaCache.Add(url, body)
 	for _, pokemon := range pokemons.PokemonEncounters {
-		fmt.Println(pokemon.Pokemon.Name)
+		fmt.Printf(" - %s\n", pokemon.Pokemon.Name)
 	}
 	return nil
 }
