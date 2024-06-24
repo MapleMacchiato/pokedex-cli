@@ -4,11 +4,14 @@ import (
 	"encoding/json"
 	"fmt"
 	"io"
+	"math/rand"
 	"net/http"
 	"time"
 
 	"github.com/MapleMacchiato/pokedex-cli/internal/pokecache"
 )
+
+var Pokedex = make(map[string]Pokemon)
 
 type Client struct {
 	locationsCache pokecache.Cache
@@ -78,7 +81,7 @@ func (c *Client) GetLocations(pageURL *string) error {
 	return nil
 }
 
-func (c *Client) GetPokemon(area string) error {
+func (c *Client) ExploreArea(area string) error {
 	url := "https://pokeapi.co/api/v2/location-area/" + area
 	pokemons := Location{}
 	body, ok := c.areaCache.Get(url)
@@ -113,4 +116,39 @@ func (c *Client) GetPokemon(area string) error {
 		fmt.Printf(" - %s\n", pokemon.Pokemon.Name)
 	}
 	return nil
+}
+
+func (c *Client) CatchPokemon(pokemon string) error {
+	url := "https://pokeapi.co/api/v2/pokemon/" + pokemon
+	pk := Pokemon{}
+	req, err := http.NewRequest("GET", url, nil)
+	if err != nil {
+		return err
+	}
+
+	res, err := c.httpClient.Do(req)
+	if err != nil {
+		return err
+	}
+
+	defer res.Body.Close()
+	body, err := io.ReadAll(res.Body)
+	c.locationsCache.Add(url, body)
+	if err != nil {
+		return err
+	}
+
+	err = json.Unmarshal(body, &pk)
+	if err != nil {
+		return err
+	}
+	catchValue := rand.Intn(10)
+	if catchValue > 4 {
+		fmt.Println("Success!")
+		Pokedex[pokemon] = pk
+		return nil
+	}
+	fmt.Printf("Failed to catch %s\n", pokemon)
+	return nil
+
 }

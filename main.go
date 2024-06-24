@@ -44,13 +44,29 @@ func getCommands() map[string]cliCommand {
 			description: "Get a list of pokemons from given area",
 			callback:    commandExplore,
 		},
+		"catch": {
+			name:        "catch",
+			description: "Attempt to catch a given Pokemon",
+			callback:    commandCatch,
+		},
 	}
 }
 
+func commandCatch(pkc *pokeapi.Client, pokemon string) error {
+	if pokemon == "" {
+		return errors.New("Please provide a Pokemon name to catch")
+	}
+	fmt.Printf("Attempting to catch %s...\n", pokemon)
+	return pkc.CatchPokemon(pokemon)
+}
+
 func commandExplore(pkc *pokeapi.Client, area string) error {
+	if area == "" {
+		return errors.New("Please provide an area to search")
+	}
 	fmt.Printf("Exploring %s\n", area)
 	fmt.Printf("Found Pokemon:\n")
-	return pkc.GetPokemon(area)
+	return pkc.ExploreArea(area)
 }
 
 func commandMapB(pkc *pokeapi.Client, a string) error {
