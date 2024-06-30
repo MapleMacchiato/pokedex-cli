@@ -67,22 +67,22 @@ func commandPokedex(pkc *pokeapi.Client, s string) error {
 	return err
 }
 
-func commandInspect(pkc *pokeapi.Client, pokemon string) error {
-	if pokemon == "" {
+func commandInspect(pkc *pokeapi.Client, pokemonName string) error {
+	if pokemonName == "" {
 		return errors.New("Please provide a Pokemon name to inspect")
 	}
-	if err := pkc.Inspect(pokemon); err != nil {
+	if err := pkc.Inspect(pokemonName); err != nil {
 		return err
 	}
 	return nil
 }
 
-func commandCatch(pkc *pokeapi.Client, pokemon string) error {
-	if pokemon == "" {
+func commandCatch(pkc *pokeapi.Client, pokemonName string) error {
+	if pokemonName == "" {
 		return errors.New("Please provide a Pokemon name to catch")
 	}
-	fmt.Printf("Attempting to catch %s...\n", pokemon)
-	err := pkc.CatchPokemon(pokemon)
+	fmt.Printf("Attempting to catch %s...\n", pokemonName)
+	err := pkc.CatchPokemon(pokemonName)
 	if err != nil {
 		return err
 	}

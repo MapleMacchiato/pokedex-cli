@@ -38,17 +38,17 @@ func (c *Client) PrintPokedex() error {
 	return nil
 }
 
-func (c *Client) Inspect(pokemon string) error {
-	if pk, ok := c.Pokedex[pokemon]; ok {
-		fmt.Println("Name:", pk.Name)
-		fmt.Println("Height:", pk.Height)
-		fmt.Println("Weight:", pk.Weight)
+func (c *Client) Inspect(pokemonName string) error {
+	if pokemon, ok := c.Pokedex[pokemonName]; ok {
+		fmt.Println("Name:", pokemon.Name)
+		fmt.Println("Height:", pokemon.Height)
+		fmt.Println("Weight:", pokemon.Weight)
 		fmt.Println("Stats:")
-		for _, stat := range pk.Stats {
+		for _, stat := range pokemon.Stats {
 			fmt.Printf("  -%s: %v\n", stat.Stat.Name, stat.BaseStat)
 		}
 		fmt.Println("Types:")
-		for _, typeInfo := range pk.Types {
+		for _, typeInfo := range pokemon.Types {
 			fmt.Println("  -", typeInfo.Type.Name)
 		}
 		return nil
@@ -90,21 +90,21 @@ func (c *Client) ExploreArea(area string) error {
 	return nil
 }
 
-func (c *Client) CatchPokemon(pokemon string) error {
-	url := "https://pokeapi.co/api/v2/pokemon/" + pokemon
-	pk := Pokemon{}
-	err := c.makeRequest(url, &pk)
+func (c *Client) CatchPokemon(pokemonName string) error {
+	url := "https://pokeapi.co/api/v2/pokemon/" + pokemonName
+	pokemon := Pokemon{}
+	err := c.makeRequest(url, &pokemon)
 	if err != nil {
 		return err
 	}
 	catchValue := rand.Intn(10)
-	fmt.Printf("Throwing pokeball at %s...\n", pokemon)
+	fmt.Printf("Throwing pokeball at %s...\n", pokemonName)
 	if catchValue > 4 {
 		fmt.Println("Success!")
-		c.Pokedex[pokemon] = pk
+		c.Pokedex[pokemonName] = pokemon
 		return nil
 	}
-	fmt.Printf("Failed to catch %s\n", pokemon)
+	fmt.Printf("Failed to catch %s\n", pokemonName)
 	return nil
 }
 
