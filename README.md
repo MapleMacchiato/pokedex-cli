@@ -9,9 +9,6 @@ Some features I have used are goroutines for creating a cache and for getting co
 - [Features](#features)
 - [Installation](#installation)
 - [Usage](#usage)
-- [Code Highlights](#code-highlights)
-- [Contributing](#contributing)
-- [License](#license)
 
 ## Features
 
