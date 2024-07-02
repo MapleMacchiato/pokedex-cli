@@ -24,4 +24,11 @@ Some features I have used are goroutines for creating a cache and for getting co
 1. **Clone the Repository:**
    ```bash
    git clone https://github.com/MapleMacchiato/pokedex-cli.git
-   cd pokedex-cli```
+   cd pokedex-cli
+
+## Usage
+- **To launch the pokedex, run the go build command, and then proceed to call the program from the localy built file.
+  ```bash
+  go build
+  ./pokedex-cli
+To find a list of available commands, run the help command
